@@ -20,7 +20,6 @@ class DB:
     def connect(self):
         try:
             self.connection = sqlite3.connect(db_name)
-            # self.connection.row_factory = self.dict_factory
             self.cursor = self.connection.cursor()
 
         except sqlite3.Error as error:
@@ -74,6 +73,7 @@ class DB:
         self.connection.execute("")
         print(f'fields: {fields}')
 
-    def dict_factory(self, row):
-        col_names = [col[0] for col in self.cursor.description]
-        return {key: value for key, value in zip(col_names, row)}
+    def get_all_active_subscriptions(self):
+        self.connect()
+        self.cursor.execute("SELECT chat FROM timers WHERE timerstatus=1")
+        return self.cursor.fetchall()

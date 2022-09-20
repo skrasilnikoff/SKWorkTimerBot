@@ -2,56 +2,53 @@
 # from typing import Union, Any
 import config
 import datetime
-import time
 from db import DB
 
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackContext
 
 TELEGRAM_BOT_TOKEN = config.telegram_bot_token
 
 
-class WorkTimer:
-    async def sendTime(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        db = DB()
-        if not db.is_timer_in_progress(update.message.chat.id):
-            return False
+# class WorkTimer:
 
-        now = datetime.datetime.now()
-        minutes = now.minute
-        print('minute', minutes)
+# async def sendTime(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     db = DB()
+#     if not db.is_timer_in_progress(update.message.chat.id):
+#         return False
+#
+#     now = datetime.datetime.now()
+#     minutes = now.minute
+#     print('minute', minutes)
+#
+#     chat_id = update.effective_chat.id
+#
+#     if 45 == minutes:
+#         await context.bot.send_message(chat_id=chat_id, text='--- Скоро перерыв ---')
+#
+#     if 50 == minutes:
+#         await context.bot.send_message(chat_id=chat_id, text='--- Перерыв ---')
+#
+#     if 00 == minutes:
+#         await context.bot.send_message(chat_id=chat_id, text='--- Продолжаем ---')
+#
+#     time.sleep(58)
+#     await self.sendTime(update, context)
 
-        chat_id = update.effective_chat.id
+# async def run(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     chat_id = update.effective_chat.id
+#     await context.bot.send_message(chat_id=chat_id, text='--- Я тут ---')
+#     print('chat id', chat_id)
+#     db = DB()
+#     db.start_timer(chat_id)
+#     await self.sendTime(update, context)
 
-        if 45 == minutes:
-            await context.bot.send_message(chat_id=chat_id, text='--- Скоро перерыв ---')
-
-        if 50 == minutes:
-            await context.bot.send_message(chat_id=chat_id, text='--- Перерыв ---')
-
-        if 00 == minutes:
-            await context.bot.send_message(chat_id=chat_id, text='--- Продолжаем ---')
-
-        time.sleep(58)
-        await self.sendTime(update, context)
-
-    async def run(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        chat_id = update.effective_chat.id
-        await context.bot.send_message(chat_id=chat_id, text='--- Я тут ---')
-        print('chat id', chat_id)
-        db = DB()
-        db.start_timer(chat_id)
-        await self.sendTime(update, context)
-
-    # @staticmethod
-    # def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    #     print('stop')
-    #     db = DB()
-    #     db.stop_timer(update.message.chat.id)
-    #     update.message.reply_text('timer is stopped')
-
-
-job_minute = None
+# @staticmethod
+# def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     print('stop')
+#     db = DB()
+#     db.stop_timer(update.message.chat.id)
+#     update.message.reply_text('timer is stopped')
 
 
 def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -64,70 +61,91 @@ def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
     return True
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sends explanation on how to use the bot."""
-    await update.message.reply_text("Hi! Use /set <seconds> to set a timer")
+# async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+#     """Sends explanation on how to use the bot."""
+#     await update.message.reply_text("Hi! Use /set <seconds> to set a timer")
 
 
-async def alarm(context: ContextTypes.DEFAULT_TYPE) -> None:
+async def alarm(context: CallbackContext):
     """Send the alarm message."""
-    chat_id = '' # get from DB
-
+    db = DB()
+    chats_ids = db.get_all_active_subscriptions()
     now = datetime.datetime.now()
     minutes = now.minute
+
     print('minute', minutes)
 
-    if 39 == minutes:
-        await context.bot.send_message(chat_id, text='--- Скоро перерыв ---')
+    for chat_id in chats_ids:
 
-    if 40 == minutes:
-        await context.bot.send_message(chat_id, text='--- Перерыв ---')
+        print('chat_id[0]', chat_id[0])
 
-    if 41 == minutes:
-        await context.bot.send_message(chat_id, text='--- Продолжаем ---')
+        chat_id = chat_id[0]
+
+        ### how to send sticker
+        # sticker = 'CAACAgIAAxkBAAEYQDdjKYJdUuAF0zuWWFGs5_zM8cWOVAAC1QADgwRdAiDbTvDRO-lVKQQ'
+        # await context.bot.send_sticker(chat_id=chat_id, sticker=sticker)
+
+        if 45 == minutes:
+            await context.bot.send_message(chat_id, text='--- Скоро перерыв ---')
+
+        if 50 == minutes:
+            await context.bot.send_message(chat_id, text='--- Перерыв ---')
+
+        if 00 == minutes:
+            await context.bot.send_message(chat_id, text='--- Продолжаем ---')
 
 
-async def set_timer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Add a job to the queue."""
+# async def set_job(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+#     """Add a job to the queue."""
+#     chat_id = update.effective_message.chat_id
+#     try:
+#         # args[0] should contain the time for the timer in seconds
+#         # due = float(context.args[0])
+#         # if due < 0:
+#         #     await update.effective_message.reply_text("Sorry we can not go back to future!")
+#         #     return
+#
+#         job_removed = remove_job_if_exists(str(chat_id), context)
+#         # context.job_queue.run_once(alarm, due, chat_id=chat_id, name=str(chat_id), data=due)
+#         context.job_queue.run_repeating(alarm, interval=60, first=0)
+#
+#         text = "Timer successfully set!"
+#         if job_removed:
+#             text += " Old one was removed."
+#         await update.effective_message.reply_text(text)
+#
+#     except (IndexError, ValueError):
+#         await update.effective_message.reply_text("Usage: /set <seconds>")
+
+async def run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_message.chat_id
-    try:
-        # args[0] should contain the time for the timer in seconds
-        # due = float(context.args[0])
-        # if due < 0:
-        #     await update.effective_message.reply_text("Sorry we can not go back to future!")
-        #     return
-
-        job_removed = remove_job_if_exists(str(chat_id), context)
-        # context.job_queue.run_once(alarm, due, chat_id=chat_id, name=str(chat_id), data=due)
-        context.job_queue.run_repeating(alarm, interval=60, first=0)
-
-        text = "Timer successfully set!"
-        if job_removed:
-            text += " Old one was removed."
-        await update.effective_message.reply_text(text)
-
-    except (IndexError, ValueError):
-        await update.effective_message.reply_text("Usage: /set <seconds>")
+    db = DB()
+    db.start_timer(chat_id)
+    await update.effective_message \
+        .reply_text("--- Ожидайте напоминаний ---")
 
 
-async def unset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Remove the job if the user changed their mind."""
     chat_id = update.message.chat_id
-    job_removed = remove_job_if_exists(str(chat_id), context)
-    text = "Timer successfully cancelled!" if job_removed else "You have no active timer."
-    await update.message.reply_text(text)
+    db = DB()
+    db.stop_timer(chat_id)
+    await update.message \
+        .reply_text("--- Хорошая работа! =) ---")
 
 
 ##########
 
 
 def bootstrap():
-    WorkTimerInstance = WorkTimer()
+    # WorkTimerInstance = WorkTimer()
     application = ApplicationBuilder().token(config.telegram_bot_token).build()
+    job_queue = application.job_queue
+    job_minute = job_queue.run_repeating(alarm, interval=60, first=10)
 
-    application.add_handler(CommandHandler(["start", "help"], start))
-    application.add_handler(CommandHandler("set", set_timer))
-    application.add_handler(CommandHandler("unset", unset))
+    # application.add_handler(CommandHandler(["start", "help"], start))
+    application.add_handler(CommandHandler("run", run))
+    application.add_handler(CommandHandler("stop", stop))
 
-    application.add_handler(CommandHandler('run', WorkTimerInstance.run))
+    # application.add_handler(CommandHandler('run', WorkTimerInstance.run))
     application.run_polling()
