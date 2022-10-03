@@ -1,5 +1,7 @@
 # import json
 # from typing import Union, Any
+import random
+
 import config
 import datetime
 from db import DB
@@ -86,13 +88,33 @@ async def alarm(context: CallbackContext):
         # await context.bot.send_sticker(chat_id=chat_id, sticker=sticker)
 
         if 45 == minutes:
-            await context.bot.send_message(chat_id, text='--- Скоро перерыв ---')
+            messages = [
+                'Перерыв через 5 минут',
+                'Скоро отдохнем)',
+                'Вот вот перерыв!'
+            ]
+            message = random.choice(messages)
+            await context.bot.send_message(chat_id, text=message)
 
         if 50 == minutes:
-            await context.bot.send_message(chat_id, text='--- Перерыв ---')
+            messages = [
+                'Давайте прервемся )',
+                'Перерыв)',
+                'Го отдохнем',
+                'Время отдохнуть немножечко'
+            ]
+            message = random.choice(messages)
+            await context.bot.send_message(chat_id, text=message)
 
         if 00 == minutes:
-            await context.bot.send_message(chat_id, text='--- Продолжаем ---')
+            messages = [
+                'Пора работать! =)',
+                'Время сделать немного денюжек)',
+                'Ну что, погнали!',
+                'Не расслабляться!'
+            ]
+            message = random.choice(messages)
+            await context.bot.send_message(chat_id, text=message)
 
 
 # async def set_job(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -122,7 +144,7 @@ async def run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     db = DB()
     db.start_timer(chat_id)
     await update.effective_message \
-        .reply_text("--- Ожидайте напоминаний ---")
+        .reply_text("Рад что вы с нами!) Сегодня отличный день чтоб поработать ;)")
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -131,7 +153,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     db = DB()
     db.stop_timer(chat_id)
     await update.message \
-        .reply_text("--- Хорошая работа! =) ---")
+        .reply_text("Ну что ж) до следующего раза!")
 
 
 ##########
@@ -144,8 +166,10 @@ def bootstrap():
     job_minute = job_queue.run_repeating(alarm, interval=60, first=10)
 
     # application.add_handler(CommandHandler(["start", "help"], start))
+    application.add_handler(CommandHandler("start", run))
     application.add_handler(CommandHandler("run", run))
     application.add_handler(CommandHandler("stop", stop))
+    application.add_handler(CommandHandler("ostanovis", stop))
 
     # application.add_handler(CommandHandler('run', WorkTimerInstance.run))
     application.run_polling()
