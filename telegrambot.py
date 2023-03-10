@@ -53,6 +53,21 @@ TELEGRAM_BOT_TOKEN = config.telegram_bot_token
 #     update.message.reply_text('timer is stopped')
 
 
+def get_currnet_day_of_week():
+    now = datetime.datetime.now()
+    weekdays = [
+        'понедельник',  # Monday
+        'вторник',  # Tuesday
+        'среда',  # Wednesday
+        'четверг',  # Thursday
+        'пятница',  # Friday
+        'суббота',  # Saturday
+        'воскресенье'  # Sunday
+    ]
+    weekday_index = now.weekday()
+    return weekdays[weekday_index]
+
+
 def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Remove job with given name. Returns whether job was removed."""
     current_jobs = context.job_queue.get_jobs_by_name(name)
@@ -143,8 +158,15 @@ async def run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_message.chat_id
     db = DB()
     db.start_timer(chat_id)
+    day = get_currnet_day_of_week()
+
+    message = f"Сегодня {day} и это отличный день чтоб поработать! ;)"
+
+    if day == 'пятница':
+        message = f"Наконец {day}! Хорошо поработаем и отдыхать!)"
+
     await update.effective_message \
-        .reply_text("Рад что вы с нами!) Сегодня отличный день чтоб поработать ;)")
+        .reply_text(f"Рад что вы с нами!) {message}")
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
