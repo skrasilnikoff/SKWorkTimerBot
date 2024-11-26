@@ -4,13 +4,16 @@ import random
 
 import config
 import datetime
+
+from ai import AI_Bot
 from db import DB
 
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackContext
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackContext, MessageHandler, filters
 
 TELEGRAM_BOT_TOKEN = config.telegram_bot_token
 
+ai_bot = AI_Bot(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
 # class WorkTimer:
 
@@ -52,6 +55,15 @@ TELEGRAM_BOT_TOKEN = config.telegram_bot_token
 #     db.stop_timer(update.message.chat.id)
 #     update.message.reply_text('timer is stopped')
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработка входящих сообщений."""
+    if update.message is not None:
+        user_message = update.message.text
+        print(user_message)
+        response = ai_bot.generate_response(user_message)
+        if response.strip() != "":
+            await update.message.reply_text(response)
+
 
 def get_currnet_day_of_week():
     now = datetime.datetime.now()
@@ -91,6 +103,8 @@ async def alarm(context: CallbackContext):
     minutes = now.minute
 
     print('minute', minutes)
+
+    # print('ai', ai_answer("привет!"))
 
     for chat_id in chats_ids:
 
@@ -192,6 +206,8 @@ def bootstrap():
     application.add_handler(CommandHandler("run", run))
     application.add_handler(CommandHandler("stop", stop))
     application.add_handler(CommandHandler("ostanovis", stop))
+
+    application.add_handler(MessageHandler(filters.TEXT, handle_message))
 
     # application.add_handler(CommandHandler('run', WorkTimerInstance.run))
     application.run_polling()
