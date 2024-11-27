@@ -15,50 +15,22 @@ TELEGRAM_BOT_TOKEN = config.telegram_bot_token
 
 ai_bot = AI_Bot(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
-# class WorkTimer:
-
-# async def sendTime(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     db = DB()
-#     if not db.is_timer_in_progress(update.message.chat.id):
-#         return False
-#
-#     now = datetime.datetime.now()
-#     minutes = now.minute
-#     print('minute', minutes)
-#
-#     chat_id = update.effective_chat.id
-#
-#     if 45 == minutes:
-#         await context.bot.send_message(chat_id=chat_id, text='--- Скоро перерыв ---')
-#
-#     if 50 == minutes:
-#         await context.bot.send_message(chat_id=chat_id, text='--- Перерыв ---')
-#
-#     if 00 == minutes:
-#         await context.bot.send_message(chat_id=chat_id, text='--- Продолжаем ---')
-#
-#     time.sleep(58)
-#     await self.sendTime(update, context)
-
-# async def run(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     chat_id = update.effective_chat.id
-#     await context.bot.send_message(chat_id=chat_id, text='--- Я тут ---')
-#     print('chat id', chat_id)
-#     db = DB()
-#     db.start_timer(chat_id)
-#     await self.sendTime(update, context)
-
-# @staticmethod
-# def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     print('stop')
-#     db = DB()
-#     db.stop_timer(update.message.chat.id)
-#     update.message.reply_text('timer is stopped')
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработка входящих сообщений."""
     if update.message is not None:
         user_message = update.message.text
+        print(user_message)
+        response = ai_bot.generate_response(user_message)
+        if response.strip() != "":
+            await update.message.reply_text(response)
+
+
+async def handle_message_reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработка входящих сообщений."""
+    if update.message is not None:
+        user_message = update.message.text
+        user_message = f'Олег. {user_message}'
         print(user_message)
         response = ai_bot.generate_response(user_message)
         if response.strip() != "":
@@ -90,11 +62,6 @@ def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
     return True
 
 
-# async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     """Sends explanation on how to use the bot."""
-#     await update.message.reply_text("Hi! Use /set <seconds> to set a timer")
-
-
 async def alarm(context: CallbackContext):
     """Send the alarm message."""
     db = DB()
@@ -103,8 +70,6 @@ async def alarm(context: CallbackContext):
     minutes = now.minute
 
     print('minute', minutes)
-
-    # print('ai', ai_answer("привет!"))
 
     for chat_id in chats_ids:
 
@@ -143,30 +108,10 @@ async def alarm(context: CallbackContext):
                 'Не расслабляться!'
             ]
             message = random.choice(messages)
+            message = ai_bot.generate_response(f'Олег. Перефразируй следующую фразу: "{message}"')
+
             await context.bot.send_message(chat_id, text=message)
 
-
-# async def set_job(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     """Add a job to the queue."""
-#     chat_id = update.effective_message.chat_id
-#     try:
-#         # args[0] should contain the time for the timer in seconds
-#         # due = float(context.args[0])
-#         # if due < 0:
-#         #     await update.effective_message.reply_text("Sorry we can not go back to future!")
-#         #     return
-#
-#         job_removed = remove_job_if_exists(str(chat_id), context)
-#         # context.job_queue.run_once(alarm, due, chat_id=chat_id, name=str(chat_id), data=due)
-#         context.job_queue.run_repeating(alarm, interval=60, first=0)
-#
-#         text = "Timer successfully set!"
-#         if job_removed:
-#             text += " Old one was removed."
-#         await update.effective_message.reply_text(text)
-#
-#     except (IndexError, ValueError):
-#         await update.effective_message.reply_text("Usage: /set <seconds>")
 
 async def run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_message.chat_id
@@ -207,7 +152,8 @@ def bootstrap():
     application.add_handler(CommandHandler("stop", stop))
     application.add_handler(CommandHandler("ostanovis", stop))
 
-    application.add_handler(MessageHandler(filters.TEXT, handle_message))
+    # reply_filter = filters.REPLY & filters.UpdateType.MESSAGE
+    reply_filter = filters.TEXT  # & filters.UpdateType.MESSAGE
+    application.add_handler(MessageHandler(reply_filter, handle_message))
 
-    # application.add_handler(CommandHandler('run', WorkTimerInstance.run))
     application.run_polling()
