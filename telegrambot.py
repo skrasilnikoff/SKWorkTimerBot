@@ -21,7 +21,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if update.message is not None:
         user_message = update.message.text
         print(user_message)
-        response = ai_bot.generate_response(user_message)
+        response = ai_bot.generate_response_with_prev(user_message)
         if response.strip() != "":
             await update.message.reply_text(response)
 
@@ -81,36 +81,49 @@ async def alarm(context: CallbackContext):
         # sticker = 'CAACAgIAAxkBAAEYQDdjKYJdUuAF0zuWWFGs5_zM8cWOVAAC1QADgwRdAiDbTvDRO-lVKQQ'
         # await context.bot.send_sticker(chat_id=chat_id, sticker=sticker)
 
+        messages = []
+        ai_message = ''
+
         if 45 == minutes:
+            ai_message = "Олег, Напиши, что через 5 минут наступит перерыв, своими словами"
             messages = [
                 'Перерыв через 5 минут',
                 'Скоро отдохнем)',
                 'Вот вот перерыв!'
             ]
-            message = random.choice(messages)
-            await context.bot.send_message(chat_id, text=message)
 
         if 50 == minutes:
+            ai_message = "Олег, Напиши, что пришло время перерыва, своими словами"
             messages = [
                 'Давайте прервемся )',
                 'Перерыв)',
                 'Го отдохнем',
                 'Время отдохнуть немножечко'
             ]
-            message = random.choice(messages)
-            await context.bot.send_message(chat_id, text=message)
 
         if 00 == minutes:
+            ai_message = "Олег, Напиши, что пришло время продолжать работать, своими словами"
             messages = [
                 'Пора работать! =)',
                 'Время сделать много денюжек)',
                 'Ну что, погнали!',
                 'Не расслабляться!'
             ]
-            message = random.choice(messages)
-            message = ai_bot.generate_response(f'Олег. Перефразируй следующую фразу: "{message}"')
 
+        if messages:
+            message = random.choice(messages)
+            print("message", message)
+
+            print("ai_message prompt >>", ai_message)
+            ai_message = ai_bot.generate_response(ai_message)
+            print("ai_message response <<", ai_message)
+            if ai_message:
+                message = ai_message
+            
             await context.bot.send_message(chat_id, text=message)
+
+            # message = f'=== {message} ===\n\n{ai_message}'
+            # await context.bot.send_message(chat_id, text=ai_message)
 
 
 async def run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -124,8 +137,13 @@ async def run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if day == 'пятница':
         message = f"Наконец {day}! Хорошо поработаем и отдыхать!)"
 
+    message = f"Рад что вы с нами!) {message}"
+
+    ai_message = ai_bot.generate_response(
+        f'Олег, перефразируй следующую фразу: "{message}". Напиши свой лучший вариант, от первого лица, чтобы звучало как твоя собственная мысль.')
+
     await update.effective_message \
-        .reply_text(f"Рад что вы с нами!) {message}")
+        .reply_text(ai_message)
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -133,8 +151,13 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     db = DB()
     db.stop_timer(chat_id)
+
+    message = "Ну что ж. до следующего раза!"
+    ai_message = ai_bot.generate_response(
+        f'Олег, перефразируй следующую фразу: "{message}". Напиши свой лучший вариант, от первого лица, чтобы звучало как твоя собственная мысль.')
+
     await update.message \
-        .reply_text("Ну что ж) до следующего раза!")
+        .reply_text(ai_message)
 
 
 ##########
